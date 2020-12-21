@@ -1079,7 +1079,8 @@ int verify (struct solver *S) {
     if (S->verb) {
       printf("c validating clause (%li, %i, %i):  ", uni, clause[PIVOT], size); printClause (clause); }
 
-    assert (size >=  1);
+//    assert (size >=  1);
+    assert (size !=  0);
 #ifdef QBF
     if (uni && URcheck (S, checked - 1, clause[PIVOT]) == SUCCEED) continue;
 #endif
