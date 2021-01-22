@@ -242,7 +242,7 @@ int URcheck (struct solver *S, int other, int reslit) {
   clause[ID] |= ACTIVE;
   int thisLevel = S->level[abs(reslit)];
   while (*clause) {
-    printf ("c level[%i] = %i\n", *clause, S->level[abs(*clause)]);
+//    printf ("c level[%i] = %i\n", *clause, S->level[abs(*clause)]);
     int level = S->level[abs(*clause++)];
     if (level > thisLevel && (level % 2 == 0)) return FAILED; }
   if (S->verb)
