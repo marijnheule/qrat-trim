@@ -242,6 +242,7 @@ int URcheck (struct solver *S, int other, int reslit) {
   clause[ID] |= ACTIVE;
   int thisLevel = S->level[abs(reslit)];
   while (*clause) {
+    printf ("c level[%i] = %i\n", *clause, S->level[abs(*clause)]);
     int level = S->level[abs(*clause++)];
     if (level > thisLevel && (level % 2 == 0)) return FAILED; }
   if (S->verb)
@@ -1126,6 +1127,7 @@ void parsePrefix (struct solver* S) {
       else return; }
 
     while (var) {
+//      printf ("c init level[%i] = %i\n", var, S->maxLevel);
       S->level[ var ] = S->maxLevel;
       var = 0; tmp = fscanf (S->inputFile, " %i ", &var); } } }
 #endif
@@ -1375,10 +1377,17 @@ int parse (struct solver* S) {
 //  for (i = -S->nVars; i <= S->nVars; i++) S->false[i] = 0;
 
 #ifdef QBF
+  int *maxseen;  maxseen  = (int *) malloc (sizeof (int) * (S->maxVar + 1));
+  int *polarity; polarity = (int *) malloc (sizeof (int) * (S->maxVar + 1));
   S->level = (int*) realloc (S->level, sizeof(int) * (S->maxVar + 1));
-  for (i = S->nVars + 1; i <= S->maxVar; i++) S->level[i] = S->maxLevel;
-//  for (i = S->nVars + 1; i <= S->maxVar; i++) S->level[i] = -1;
-/*
+//  for (i = S->nVars + 1; i <= S->maxVar; i++) {
+//    printf ("c fixing level[%i] = %i\n", i, S->maxLevel);
+//    S->level[i] = S->maxLevel;
+//  }
+  for (i = S->nVars + 1; i <= S->maxVar; i++) {
+    S->level[i] = -1;
+    maxseen[i] = polarity[i] = 0; }
+
   for (i = S->nClauses; i < S->lastLemma; i++) {
     long ad = S->adlist[ i ]; long d = ad & 1;
     int *lemmas = S->DB + (ad >> INFOBITS);
@@ -1387,11 +1396,29 @@ int parse (struct solver* S) {
       if (S->level[abs(*lemmas)] > max) max = S->level[abs(*lemmas)];
       lemmas++; }
     lemmas = S->DB + (ad >> INFOBITS);
+    max = max + (max % 2);
     while (*lemmas) {
-      if (S->level[abs(*lemmas)] == -1) S->level[abs(*lemmas)] = max;
-      lemmas++; } }
-*/
-//  for (i = 1; i <= n; i++) if (S->level[i] == -1) S->level[i] = S->maxLevel;
+      int lit = *lemmas++; int var = abs(lit);
+      if (S->level[var] == -1) {
+        if (polarity[var] != -lit) {
+          polarity[var] = lit;
+          if (max > maxseen[var]) {
+//            printf ("c setting temp level[%i] to %i\n", var, max);
+            maxseen[var] = max;
+          }
+        }
+        else {
+//          printf ("c fixing level[%i] = %i\n", var, maxseen[var]);
+          S->level[var] = maxseen[var];
+        }
+      }
+    }
+  }
+
+  free (maxseen);
+  free (polarity);
+
+  for (i = 1; i <= n; i++) if (S->level[i] == -1) S->level[i] = S->maxLevel;
 #endif
   return SAT; }
 
