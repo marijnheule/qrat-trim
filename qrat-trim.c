@@ -1,4 +1,3 @@
-
 /************************************************************************************[qrat-trim.c]
 Copyright (c) 2014, Marijn Heule and Nathan Wetzler
 Copyright (c) 2019-2020 Marijn Heule, Carnegie Mellon University
@@ -241,6 +240,7 @@ int URcheck (struct solver *S, int other, int reslit) {
     printf("c UR marking clause "); printClause(clause); }
   clause[ID] |= ACTIVE;
   int thisLevel = S->level[abs(reslit)];
+  if (S->level[abs(reslit)] % 2 == 0) return FAILED;
   while (*clause) {
 //    printf ("c level[%i] = %i\n", *clause, S->level[abs(*clause)]);
     int level = S->level[abs(*clause++)];
@@ -1083,8 +1083,14 @@ int verify (struct solver *S) {
 //    assert (size >=  1);
     assert (size !=  0);
 #ifdef QBF
+    if (uni && (S->level[abs(clause[PIVOT])] % 2 == 0)) {
+      printf ("c ERROR: applying universal reduction on existential literal\n");
+      printf ("c in clause "); printClause (clause);
+      return SAT;
+    }
     if (uni && URcheck (S, checked - 1, clause[PIVOT]) == SUCCEED) continue;
 #endif
+
     struct timeval current_time;
     gettimeofday(&current_time, NULL);
     int seconds = (int) (current_time.tv_sec - S->start_time.tv_sec);
